@@ -1,0 +1,20 @@
+[
+    {
+      "name": "question-answering",
+      "description": "A simple pattern based question answering plugin for Solr",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "date": "2019-12-13",
+          "artifacts": [
+            {
+              "url": "question-answering-1.0.jar",
+              "sig": "Hau46QF4424qUDSMwRYa/sO/L4Hfbdr6jLQDEsbJpXJdR6jPmd9v92mAU8wSMO/riVk/Zc4oovCCu2PRWnz7sA=="
+            }
+          ]
+        }
+      ]
+    }
+  ]
+  
+  
