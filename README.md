@@ -25,7 +25,7 @@ A simple Solr package for a question answering engine
 
 * Deploy package on the collection
 
-    `bin/solr package deploy question-answering -collections facts -p RH-HANDLER-PATH=/qa`
+    `bin/solr package deploy question-answering -y -collections facts -p RH-HANDLER-PATH=/qa`
 
 * Use the plugin
 
