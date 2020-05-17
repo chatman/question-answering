@@ -19,6 +19,19 @@
           "condition": "$['config'].['requestHandler'].['${RH-HANDLER-PATH}'].['_packageinfo_'].['version']",
           "expected": "${package-version}"
         }
+      },
+      {
+	"name": "solr-ui",
+	"setup-command": {
+	  "path": "/api/cluster/plugin",
+	  "method": "POST",
+	  "payload": { "add": {"name":"solrui", "class": "question-answering:com.chattopadhyaya.UIHandler", "version": "${package-version}"}}
+	},
+	"uninstall-command": {
+	  "path": "/api/cluster/plugin",
+	  "method": "POST",
+	  "payload": {"remove": "solrui"}
+	}
       }
     ],
     "parameter-defaults": {
