@@ -24,6 +24,8 @@ import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.lucene.analysis.util.ResourceLoader;
+import org.apache.lucene.analysis.util.ResourceLoaderAware;
 import org.apache.solr.api.Command;
 import org.apache.solr.api.EndPoint;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
@@ -45,7 +47,7 @@ import org.slf4j.LoggerFactory;
 @EndPoint(path = "/plugin/solrui/*",
 method = METHOD.GET,
 permission = PermissionNameProvider.Name.CONFIG_READ_PERM)
-public class UIHandler {
+public class UIHandler implements ResourceLoaderAware {
 
 	final public static String PLUGIN_PATH = "/plugin/solrui";
 
@@ -53,18 +55,27 @@ public class UIHandler {
 
 	private final CoreContainer coreContainer;
 
+	private ResourceLoader loader = null;
+
 	public UIHandler(CoreContainer coreContainer) {
 		this.coreContainer = coreContainer;
 	}
 
+
+	@Override
+	public void inform(ResourceLoader loader) throws IOException {
+		this.loader = loader;		
+	}
+
 	@Command
 	public void call(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException{
-		String path = req.getHttpSolrCall().getPath(); // Can be like this: /____v2/plugin/uihandler/index.htm
+		String path = req.getHttpSolrCall().getPath(); // Can be like this: /__v2/plugin/uihandler/index.htm
 		String filepath = path.substring(path.indexOf(PLUGIN_PATH) + PLUGIN_PATH.length());
 
 		if ("".equalsIgnoreCase(filepath) || "/".equalsIgnoreCase(filepath)) {
-			filepath = "/index.html";
+			filepath = "index.html";
 		}
+		if (filepath.startsWith("/")) filepath = filepath.substring(1);
 
 		// HACK: If this is not a request for static content, but a request to a Solr endpoint, try to forward to the
 		// right place. A proper UI impl should never make Solr API calls to this endpoint.
@@ -75,7 +86,8 @@ public class UIHandler {
 		newparams.set(CommonParams.WT, ReplicationHandler.FILE_STREAM);
 		req.setParams(newparams);
 
-		InputStream in = getClass().getResourceAsStream(filepath);
+		InputStream in = loader.openResource(filepath);
+		log.info("Trying to access: "+filepath);
 		byte data[] = IOUtils.toByteArray(in);
 
 		String contentType = getContentType(filepath);
