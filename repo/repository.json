@@ -9,7 +9,17 @@
           "artifacts": [
             {
               "url": "question-answering-1.0.jar",
-              "sig": "zmn3dJ4O/4opNX2C71tRbrOVaFFFGb0lut6x1fpzgZEqwRT4GH2SDB+I/0vMDN6+t5NWuMa48W0krxe7JL1+ng=="
+              "sig": "yevpC+9fTB40cjkvk5Svu1W5JmVD7Zf5MI4wsvQCufk0/GGphrZXgl/5wzVx9rWoc1fRxMUWfNJ82KFcf+eKTw=="
+            }
+          ]
+        },
+        {
+          "version": "2.0.0",
+          "date": "2019-12-13",
+          "artifacts": [
+            {
+              "url": "question-answering-2.0.jar",
+              "sig": "3fVOvQTlmN+84bHnRWggd9Fj/dmdznbYkur2Yq3bfc1NNUkxPPWOQprLI7PXJ3KaFDaSHpFe2G5g6NPjb8IStw=="
             }
           ]
         }

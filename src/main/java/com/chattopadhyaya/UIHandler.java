@@ -44,12 +44,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-@EndPoint(path = "/plugin/solrui/*",
+@EndPoint(path = "$path-prefix/*",
 method = METHOD.GET,
 permission = PermissionNameProvider.Name.CONFIG_READ_PERM)
 public class UIHandler implements ResourceLoaderAware {
 
-	final public static String PLUGIN_PATH = "/plugin/solrui";
+	final public static String PLUGIN_PATH = "/yasaui";
 
 	private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -61,7 +61,6 @@ public class UIHandler implements ResourceLoaderAware {
 		this.coreContainer = coreContainer;
 	}
 
-
 	@Override
 	public void inform(ResourceLoader loader) throws IOException {
 		this.loader = loader;		
@@ -69,7 +68,7 @@ public class UIHandler implements ResourceLoaderAware {
 
 	@Command
 	public void call(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException{
-		String path = req.getHttpSolrCall().getPath(); // Can be like this: /__v2/plugin/uihandler/index.htm
+		/*String path = req.getHttpSolrCall().getPath(); // Can be like this: /__v2/plugin/uihandler/index.htm
 		String filepath = path.substring(path.indexOf(PLUGIN_PATH) + PLUGIN_PATH.length());
 
 		if ("".equalsIgnoreCase(filepath) || "/".equalsIgnoreCase(filepath)) {
@@ -80,12 +79,12 @@ public class UIHandler implements ResourceLoaderAware {
 		// HACK: If this is not a request for static content, but a request to a Solr endpoint, try to forward to the
 		// right place. A proper UI impl should never make Solr API calls to this endpoint.
 		// This is a security vulnerability, NEVER USE THE FOLLOWING IN PRODUCTION.
-		if (forwardIfNeeded(req, rsp, filepath)) return;
-
+		
 		ModifiableSolrParams newparams = new ModifiableSolrParams(req.getOriginalParams());
 		newparams.set(CommonParams.WT, ReplicationHandler.FILE_STREAM);
 		req.setParams(newparams);
 
+		if (forwardIfNeeded(req, rsp, filepath)) return;
 		InputStream in = loader.openResource(filepath);
 		log.info("Trying to access: "+filepath);
 		byte data[] = IOUtils.toByteArray(in);
@@ -105,7 +104,8 @@ public class UIHandler implements ResourceLoaderAware {
 			}
 		};
 
-		rsp.add(ReplicationHandler.FILE_STREAM, writer);
+		rsp.add(ReplicationHandler.FILE_STREAM, writer);*/
+		rsp.add("version", "2.0");
 	}
 
 	String getContentType(String filepath) {
@@ -130,7 +130,9 @@ public class UIHandler implements ResourceLoaderAware {
 	}
 
 	private boolean forwardIfNeeded(SolrQueryRequest req, SolrQueryResponse rsp, String filepath) {
-		String whitelist[] = {"css", "favicon.ico", "img", "index.html", "js", "libs", "manifest.json", "partials", "webapp", "WEB-INF"};
+		return false;
+		
+		/*String whitelist[] = {"css", "favicon.ico", "img", "index.html", "js", "libs", "manifest.json", "partials", "webapp", "WEB-INF"};
 		boolean needsForwarding = true;
 		for (String w: whitelist) {
 			if (filepath.startsWith("/"+w)) {
@@ -141,7 +143,7 @@ public class UIHandler implements ResourceLoaderAware {
 			forward(req, filepath, req.getParams(), rsp);
 			return true;
 		}
-		return false;
+		return false;*/
 	}
 
 	private void forward(SolrQueryRequest req, String path, SolrParams params, SolrQueryResponse rsp){
