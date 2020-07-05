@@ -22,6 +22,16 @@
               "sig": "3fVOvQTlmN+84bHnRWggd9Fj/dmdznbYkur2Yq3bfc1NNUkxPPWOQprLI7PXJ3KaFDaSHpFe2G5g6NPjb8IStw=="
             }
           ]
+        },
+        {
+          "version": "3.0.0",
+          "date": "2019-12-13",
+          "artifacts": [
+            {
+              "url": "question-answering-3.0.jar",
+              "sig": "pt6Mu6Z6uGYjZCvTC4PSg6RcX8I4xtGU7rQbc7VHu69B6ve7pdK0OYH1qK5Oa6WfJJ6MKN73lu0hBJplmnP0IA=="
+            }
+          ]
         }
       ]
     }

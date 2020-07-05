@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.invoke.MethodHandles;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -29,9 +30,12 @@ import org.apache.lucene.analysis.util.ResourceLoaderAware;
 import org.apache.solr.api.Command;
 import org.apache.solr.api.EndPoint;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
+import org.apache.solr.common.SolrException;
+import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.Utils;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.ReplicationHandler;
@@ -48,9 +52,6 @@ import org.slf4j.LoggerFactory;
 method = METHOD.GET,
 permission = PermissionNameProvider.Name.CONFIG_READ_PERM)
 public class UIHandler implements ResourceLoaderAware {
-
-	final public static String PLUGIN_PATH = "/yasaui";
-
 	private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
 	private final CoreContainer coreContainer;
@@ -68,23 +69,23 @@ public class UIHandler implements ResourceLoaderAware {
 
 	@Command
 	public void call(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException{
-		/*String path = req.getHttpSolrCall().getPath(); // Can be like this: /__v2/plugin/uihandler/index.htm
-		String filepath = path.substring(path.indexOf(PLUGIN_PATH) + PLUGIN_PATH.length());
-
-		if ("".equalsIgnoreCase(filepath) || "/".equalsIgnoreCase(filepath)) {
-			filepath = "index.html";
-		}
-		if (filepath.startsWith("/")) filepath = filepath.substring(1);
+		String path = req.getHttpSolrCall().getPath(); // Can be like this: /__v2/plugin/uihandler/index.htm
+		log.info("Path: "+path);
+		
+		String filepath = resolveFilePath(path);
+		log.info("FilePath: "+filepath);
 
 		// HACK: If this is not a request for static content, but a request to a Solr endpoint, try to forward to the
 		// right place. A proper UI impl should never make Solr API calls to this endpoint.
 		// This is a security vulnerability, NEVER USE THE FOLLOWING IN PRODUCTION.
 		
+		if (forwardIfNeeded(req, rsp, filepath)) return;
+		
 		ModifiableSolrParams newparams = new ModifiableSolrParams(req.getOriginalParams());
 		newparams.set(CommonParams.WT, ReplicationHandler.FILE_STREAM);
 		req.setParams(newparams);
 
-		if (forwardIfNeeded(req, rsp, filepath)) return;
+
 		InputStream in = loader.openResource(filepath);
 		log.info("Trying to access: "+filepath);
 		byte data[] = IOUtils.toByteArray(in);
@@ -104,12 +105,29 @@ public class UIHandler implements ResourceLoaderAware {
 			}
 		};
 
-		rsp.add(ReplicationHandler.FILE_STREAM, writer);*/
-		rsp.add("version", "2.0");
+		rsp.add(ReplicationHandler.FILE_STREAM, writer);
+		//rsp.add("version", "2.0");
+	}
+
+	private String resolveFilePath(String path) {
+		// Path can be: /____v2/yasaui/index.htm
+		if (path.split("/").length<3)
+			throw new SolrException(ErrorCode.BAD_REQUEST, "Can't parse path: "+path);
+		log.info("Splits: "+Arrays.toString(path.split("/")));
+		String basepath = "/" + path.split("/")[1] + "/" + path.split("/")[2];
+		log.info("basepath: "+basepath);
+		
+		String filepath = path.substring(path.indexOf(basepath) + basepath.length());
+
+		if ("".equalsIgnoreCase(filepath) || "/".equalsIgnoreCase(filepath)) {
+			filepath = "index.html";
+		}
+		if (filepath.startsWith("/")) filepath = filepath.substring(1);
+		return filepath;
 	}
 
 	String getContentType(String filepath) {
-		Map<String, String> types = Map.of(
+		Map<String, Object> types = (Map<String, Object>)Utils.makeMap(
 				"jpg", "image/jpg",
 				"png", "image/png",
 				"gif", "image/gif",
@@ -123,40 +141,45 @@ public class UIHandler implements ResourceLoaderAware {
 				);
 		String extension = filepath.split("\\.")[filepath.split("\\.").length-1];
 		if (types.containsKey(extension)) {
-			return types.get(extension);
+			return types.get(extension).toString();
 		} else {
 			return "text/plain";
 		}
 	}
 
 	private boolean forwardIfNeeded(SolrQueryRequest req, SolrQueryResponse rsp, String filepath) {
-		return false;
-		
-		/*String whitelist[] = {"css", "favicon.ico", "img", "index.html", "js", "libs", "manifest.json", "partials", "webapp", "WEB-INF"};
+		String whitelist[] = {"css", "favicon.ico", "img", "index.html", "js", "libs", "manifest.json", "partials", "webapp", "WEB-INF"};
 		boolean needsForwarding = true;
 		for (String w: whitelist) {
-			if (filepath.startsWith("/"+w)) {
+			if (filepath.startsWith(w)) {
 				needsForwarding = false;
 			}
 		}
+		log.info("Needs forwarding for "+filepath+"? "+needsForwarding);
 		if (needsForwarding) {
 			forward(req, filepath, req.getParams(), rsp);
 			return true;
 		}
-		return false;*/
+		return false;
 	}
 
 	private void forward(SolrQueryRequest req, String path, SolrParams params, SolrQueryResponse rsp){
 		LocalSolrQueryRequest r = new LocalSolrQueryRequest(req.getCore(), params);
-		SolrRequestHandler rh = coreContainer.getRequestHandler(path);
+		SolrRequestHandler rh = coreContainer.getRequestHandler("/"+path);
 		if (rh == null) {
 			path = path.startsWith("/")? path.substring(1): path;
 			String first = path.split("/")[0];
 			if (coreContainer.getCore(first) != null) {
 				String handlerPath = path.substring(first.length());
+				log.info("Core: "+first+", handler: "+handlerPath);
 				rh = coreContainer.getCore(first).getRequestHandler(handlerPath);
 			}
 		}
+		if (rh != null) {
+			log.info("RH: "+rh.getName());
+			log.info("Request: "+params);
+		}
+		r.getContext().put(org.apache.solr.common.params.CommonParams.PATH, req.getContext().get(org.apache.solr.common.params.CommonParams.PATH));
 		rh.handleRequest(r, rsp);
 	}
 

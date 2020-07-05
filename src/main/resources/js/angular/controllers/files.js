@@ -26,6 +26,8 @@ solrAdminApp.controller('FilesController',
         $scope.content = null;
 
         $scope.baseurl = $location.absUrl().substr(0,$location.absUrl().indexOf("#")); // Including /solr/ context
+        
+        alert($scope.baseurl);
 
         $scope.refresh = function () {
 
